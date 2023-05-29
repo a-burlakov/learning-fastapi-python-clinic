@@ -1,8 +1,11 @@
 import os.path
 from datetime import datetime
 
-from fastapi import FastAPI, Path, Body
+from fastapi import FastAPI, Path, Body, Response
 from pydantic import BaseModel
+import glob
+
+from starlette import status
 
 app = FastAPI()
 
@@ -27,15 +30,26 @@ class Activity(BaseModel):
     date: datetime
 
 
+def find_activity(activity_id: int = 0):
+    file_mask = f"*{activity_id if activity_id else ''}.json"
+    return glob.glob(os.path.join(ACTIVITIES_FOLDER, file_mask))
+
+
 @app.post("/activity/add/{activity_id}")
 def add_activity(
     activity_id: int = Path(
         title="Айдишник активности!", description="Передается в заголовке"
     ),
     activity: Activity = Body(),
+    response: Response = Response(),
 ):
-    file_name = f"activity_{activity_id}.json"
-    with open(os.path.join(ACTIVITIES_FOLDER, file_name), "w") as f:
-        f.write(activity.json())
+    file = find_activity(activity_id)
+    if file:
+        response.status_code = status.HTTP_302_FOUND
+        return response
+    else:
+        file_name = f"activity_{activity_id}.json"
+        with open(os.path.join(ACTIVITIES_FOLDER, file_name), "w") as f:
+            f.write(activity.json())
 
     return True
