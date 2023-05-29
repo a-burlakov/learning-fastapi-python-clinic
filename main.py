@@ -2,7 +2,7 @@ import os.path
 from datetime import datetime
 
 from fastapi import FastAPI, Path, Body, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, parse_file_as
 import glob
 
 from starlette import status
@@ -33,6 +33,22 @@ class Activity(BaseModel):
 def find_activity(activity_id: int = 0):
     file_mask = f"*{activity_id if activity_id else ''}.json"
     return glob.glob(os.path.join(ACTIVITIES_FOLDER, file_mask))
+
+
+@app.get("/activity/get/all")
+def get_activity():
+    res = []
+    files = find_activity()
+    if files:
+        for file in files:
+            res.append(parse_file_as(Activity, file))
+
+    return res
+
+
+@app.get("/activity/get/{activity_id}")
+def get_activity(activity_id: int):
+    pass
 
 
 @app.post("/activity/add/{activity_id}")
