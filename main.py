@@ -47,8 +47,12 @@ def get_activity():
 
 
 @app.get("/activity/get/{activity_id}")
-def get_activity(activity_id: int):
-    pass
+def get_activity(activity_id: int, response: Response):
+    file = find_activity(activity_id)
+    if file:
+        return parse_file_as(Activity, file[0])
+    response.status_code = status.HTTP_404_NOT_FOUND
+    return response
 
 
 @app.post("/activity/add/{activity_id}")
